@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Maze Chase - Pink Pastel</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #f5e9ed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            padding: 16px;
+        }
+
+        .game-wrapper {
+            background-color: #f8f0f3;
+            border-radius: 32px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
+            padding: 20px 18px 22px;
+            max-width: 100%;
+            width: fit-content;
+            margin: auto;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            background-color: #faf2f5;
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 16px 8px 12px 8px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .score-card {
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #aa6f84;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .npc-indicator {
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #b46983;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .reset-btn {
+            background: #eed6df;
+            border: none;
+            padding: 6px 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 40px;
+            color: #7e4d62;
+            cursor: pointer;
+            transition: 0.1s ease;
+            font-family: inherit;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .reset-btn:active {
+            transform: scale(0.96);
+            background: #e7cad4;
+        }
+
+        .joystick-area {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            margin-bottom: 6px;
+        }
+
+        .joystick-base {
+            width: 112px;
+            height: 112px;
+            background: #f0e2e8;
+            border-radius: 100%;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.05), 0 6px 12px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            touch-action: none;
+        }
+
+        .joystick-thumb {
+            width: 50px;
+            height: 50px;
+            background: #f7cadf;
+            border-radius: 100%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            cursor: grab;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.02s linear;
+        }
+
+        .joystick-thumb:active {
+            cursor: grabbing;
+        }
+
+        .game-footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #bf93a5;
+            margin-top: 14px;
+            font-weight: 400;
+        }
+
+        /* Death overlay */
+        .death-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(245, 220, 230, 0.9);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .death-card {
+            background: #fffafc;
+            max-width: 320px;
+            width: 85%;
+            border-radius: 48px;
+            padding: 28px 20px 32px;
+            text-align: center;
+            box-shadow: 0 20px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f3d3df;
+        }
+
+        .death-card h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #b35f7e;
+            margin: 8px 0 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .death-message {
+            font-size: 1.35rem;
+            font-weight: 500;
+            background: #fcecf2;
+            display: inline-block;
+            padding: 10px 22px;
+            border-radius: 60px;
+            color: #9a516e;
+            margin: 8px 0;
+        }
+
+        .tryagain-btn {
+            background: #e7bfd0;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 10px 28px;
+            margin-top: 22px;
+            border-radius: 50px;
+            color: #5f3b4a;
+            cursor: pointer;
+            transition: 0.08s linear;
+            font-family: inherit;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+        }
+
+        .tryagain-btn:active {
+            transform: scale(0.96);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 550px) {
+            .game-wrapper {
+                padding: 14px 12px 18px;
+            }
+            .joystick-base {
+                width: 92px;
+                height: 92px;
+            }
+            .joystick-thumb {
+                width: 42px;
+                height: 42px;
+            }
+            .score-card, .npc-indicator {
+                font-size: 0.75rem;
+                padding: 4px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="game-wrapper">
+    <canvas id="mazeCanvas" width="720" height="560"></canvas>
+    <div class="info-panel">
+        <div class="score-card">
+            <span>⭐</span>
+            <span id="scoreValue">0</span>
+        </div>
+        <div class="npc-indicator" id="npcStatus">
+            <span id="npcIcon">🐢</span>
+            <span id="npcWarningText">pelan dulu</span>
+        </div>
+        <button class="reset-btn" id="manualResetBtn">Ulang</button>
+    </div>
+    <div class="joystick-area">
+        <div id="joystickBase" class="joystick-base">
+            <div id="joystickThumb" class="joystick-thumb"></div>
+        </div>
+    </div>
+    <div class="game-footer">gerakan joystick • hindari musuh • kumpulkan bintang</div>
+</div>
+
+<!-- Death overlay -->
+<div id="deathOverlay" class="death-overlay hidden">
+    <div class="death-card">
+        <div style="font-size: 2.4rem;">💀</div>
+        <h2>GAME OVER</h2>
+        <div class="death-message">karnaa kalah wajibb tidurrr</div>
+        <button id="tryAgainBtn" class="tryagain-btn">Coba lagi</button>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- KONFIGURASI ----------
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Ukuran labirin: 18x14 (grid lebih pas agar tidak terlalu sempit)
+        const MAP_W = 18;
+        const MAP_H = 14;
+        const cellW = canvas.width / MAP_W;   // 720/18 = 40
+        const cellH = canvas.height / MAP_H;   // 560/14 = 40
+        
+        // Dinding labirin (cukup kompleks namun masih ada jalan, musuh yang membuat mustahil karena tiba-tiba cepat)
+        const wallMap = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,1],
+            [1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1],
+            [1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,1],
+            [1,0,1,1,1,1,1,0,1,0,1,1,1,1,0,1,0,1],
+            [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,0,1,0,1,1,1,0,1,1,0,1,1,1],
+            [1,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1],
+            [1,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1],
+            [1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1],
+            [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,1],
+            [1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+        
+        // Posisi awal & tujuan (bintang)
+        let player = { x: 1, y: 1 };
+        let npc = { x: 14, y: 7 };     // NPC mulai agak jauh
+        let goal = { x: 15, y: 11 };
+        
+        let score = 0;
+        let gameRunning = true;
+        
+        // Kecepatan & mekanik NPC: awal lambat (0.025 per frame), setelah frame tertentu jadi super cepat
+        let npcSpeed = 0.028;        // pelan
+        let speedRampUp = false;
+        let rampCounter = 0;
+        const RAMP_FRAMES = 220;      // sekitar 3.5 detik (60fps) lalu tiba-tiba menjadi sangat cepat
+        let isDead = false;
+        
+        // Joystick state
+        let joystickActive = false;
+        let joyVector = { x: 0, y: 0 };
+        const baseElem = document.getElementById('joystickBase');
+        const thumbElem = document.getElementById('joystickThumb');
+        const maxDist = 45;
+        
+        // Load gambar dari link (NPC + Player) - pastikan gambar muncul
+        const npcImg = new Image();
+        const playerImg = new Image();
+        // Gunakan direct link upload dari ibb (asli)
+        npcImg.crossOrigin = "Anonymous";
+        playerImg.crossOrigin = "Anonymous";
+        npcImg.src = "https://i.ibb.co/7dJNmrfD/monster.png";
+        playerImg.src = "https://i.ibb.co/pjx8ZyK9/player.png";
+        // fallback jika gambar gagal (tetap tampilkan bentuk)
+        let npcLoaded = false;
+        let playerLoaded = false;
+        npcImg.onload = () => { npcLoaded = true; };
+        playerImg.onload = () => { playerLoaded = true; };
+        npcImg.onerror = () => { console.warn("NPC image fallback"); npcLoaded = false; };
+        playerImg.onerror = () => { console.warn("Player image fallback"); playerLoaded = false; };
+        
+        // ---------- Helper grid ----------
+        function isWalkable(x, y) {
+            if (x < 0 || x >= MAP_W || y < 0 || y >= MAP_H) return false;
+            return wallMap[y][x] === 0;
+        }
+        
+        // Pindahkan player
+        function tryMovePlayer(dx, dy) {
+            if (!gameRunning) return false;
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+            if (isWalkable(newX, newY)) {
+                player.x = newX;
+                player.y = newY;
+                // cek koin/bintang
+                if (player.x === goal.x && player.y === goal.y && gameRunning) {
+                    score++;
+                    document.getElementById('scoreValue').innerText = score;
+                    relocateGoal();
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        // Relokasi tujuan (bintang) ke tempat acak yang bukan tembok & bukan posisi player/npc
+        function relocateGoal() {
+            let freeSpots = [];
+            for (let i = 0; i < MAP_W; i++) {
+                for (let j = 0; j < MAP_H; j++) {
+                    if (wallMap[j][i] === 0 && !(player.x === i && player.y === j) && !(npc.x === i && npc.y === j)) {
+                        freeSpots.push({ x: i, y: j });
+                    }
+                }
+            }
+            if (freeSpots.length > 0) {
+                const newPos = freeSpots[Math.floor(Math.random() * freeSpots.length)];
+                goal.x = newPos.x;
+                goal.y = newPos.y;
+            }
+        }
+        
+        // NPC AI: mengejar player dengan kecepatan variabel (awal lambat, tiba-tiba super cepat -> mustahil dihindari)
+        function moveNPC() {
+            if (!gameRunning) return;
+            
+            // update kecepatan bertahap: mula lambat lalu setelah frame tertentu jadi cepat
+            if (!speedRampUp) {
+                rampCounter++;
+                if (rampCounter > RAMP_FRAMES) {
+                    speedRampUp = true;
+                    npcSpeed = 0.34;    // loncat drastis
+                    document.getElementById('npcWarningText').innerText = "mengejar sangat cepat!";
+                    document.getElementById('npcIcon').innerHTML = "⚡";
+                } else {
+                    npcSpeed = 0.028;   // tetap pelan diawal
+                }
+            } else {
+                // setelah mode cepat, boleh sedikit bertambah
+                npcSpeed = Math.min(0.42, npcSpeed + 0.0015);
+            }
+            
+            // arah ke player (greedy)
+            let dx = player.x - npc.x;
+            let dy = player.y - npc.y;
+            let moveX = 0, moveY = 0;
+            
+            // Prioritas sumbu terdekat
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx !== 0) {
+                    const stepX = dx > 0 ? 1 : -1;
+                    if (isWalkable(npc.x + stepX, npc.y)) moveX = stepX;
+                    else if (dy !== 0) {
+                        const stepY = dy > 0 ? 1 : -1;
+                        if (isWalkable(npc.x, npc.y + stepY)) moveY = stepY;
+                    }
+                }
+            } else {
+                if (dy !== 0) {
+                    const stepY = dy > 0 ? 1 : -1;
+                    if (isWalkable(npc.x, npc.y + stepY)) moveY = stepY;
+                    else if (dx !== 0) {
+                        const stepX = dx > 0 ? 1 : -1;
+                        if (isWalkable(npc.x + stepX, npc.y)) moveX = stepX;
+                    }
+                }
+            }
+            // fallback jika stuck: coba gerak acak yang valid
+            if (moveX === 0 && moveY === 0) {
+                const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+                for (let d of dirs) {
+                    if (isWalkable(npc.x + d[0], npc.y + d[1])) {
+                        moveX = d[0]; moveY = d[1];
+                        break;
+                    }
+                }
+            }
+            
+            npc.x += moveX;
+            npc.y += moveY;
+            
+            // Deteksi tabrakan
+            if (npc.x === player.x && npc.y === player.y) {
+                gameRunning = false;
+                showDeathOverlay();
+            }
+        }
+        
+        // Joystick handlers yang smooth (untuk HP dan desktop)
+        function getRelativePos(e, rect) {
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            let offsetX = clientX - rect.left;
+            let offsetY = clientY - rect.top;
+            return { x: offsetX, y: offsetY };
+        }
+        
+        function updateJoystick(posX, posY, rect) {
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            let dx = posX - centerX;
+            let dy = posY - centerY;
+            let dist = Math.hypot(dx, dy);
+            let limitedDist = Math.min(dist, maxDist);
+            let angle = Math.atan2(dy, dx);
+            let thumbX = Math.cos(angle) * limitedDist;
+            let thumbY = Math.sin(angle) * limitedDist;
+            thumbElem.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
+            
+            let normX = 0, normY = 0;
+            if (dist > 0.01) {
+                normX = dx / dist;
+                normY = dy / dist;
+            }
+            joyVector.x = normX;
+            joyVector.y = normY;
+        }
+        
+        function resetJoystick() {
+            thumbElem.style.transform = "translate(-50%, -50%)";
+            joyVector.x = 0;
+            joyVector.y = 0;
+        }
+        
+        function startJoystick(e) {
+            e.preventDefault();
+            joystickActive = true;
+            const rect = baseElem.getBoundingClientRect();
+            const { x, y } = getRelativePos(e, rect);
+            updateJoystick(x, y, rect);
+        }
+        
+        function moveJoystick(e) {
+            if (!joystickActive) return;
+            e.preventDefault();
+            const rect = baseElem.getBoundingClientRect();
+            const { x, y } = getRelativePos(e, rect);
+            updateJoystick(x, y, rect);
+        }
+        
+        function endJoystick() {
+            joystickActive = false;
+            resetJoystick();
+        }
+        
+        baseElem.addEventListener('mousedown', startJoystick);
+        window.addEventListener('mousemove', moveJoystick);
+        window.addEventListener('mouseup', endJoystick);
+        baseElem.addEventListener('touchstart', startJoystick, { passive: false });
+        window.addEventListener('touchmove', moveJoystick, { passive: false });
+        window.addEventListener('touchend', endJoystick);
+        
+        // Gerakan player dari joystick tiap frame (responsif)
+        function updateMovementFromJoystick() {
+            if (!gameRunning) return;
+            let moveX = 0, moveY = 0;
+            if (joyVector.x > 0.35) moveX = 1;
+            else if (joyVector.x < -0.35) moveX = -1;
+            if (joyVector.y > 0.35) moveY = 1;
+            else if (joyVector.y < -0.35) moveY = -1;
+            
+            if (moveX !== 0 || moveY !== 0) {
+                tryMovePlayer(moveX, moveY);
+            }
+        }
+        
+        // Death overlay + reset logic
+        function showDeathOverlay() {
+            const overlay = document.getElementById('deathOverlay');
+            overlay.classList.remove('hidden');
+        }
+        
+        function hideDeathOverlay() {
+            const overlay = document.getElementById('deathOverlay');
+            overlay.classList.add('hidden');
+        }
+        
+        function resetGame() {
+            gameRunning = false;
+            // reset state internal
+            player = { x: 1, y: 1 };
+            npc = { x: 14, y: 7 };
+            goal = { x: 15, y: 11 };
+            score = 0;
+            document.getElementById('scoreValue').innerText = "0";
+            speedRampUp = false;
+            rampCounter = 0;
+            npcSpeed = 0.028;
+            gameRunning = true;
+            isDead = false;
+            // reset ui NPC
+            document.getElementById('npcWarningText').innerText = "pelan dulu";
+            document.getElementById('npcIcon').innerHTML = "🐢";
+            // pastikan goal tidak ketumpukan
+            if (wallMap[goal.y][goal.x] !== 0 || (goal.x === player.x && goal.y === player.y)) {
+                relocateGoal();
+            }
+            if (npc.x === player.x && npc.y === player.y) npc = { x: 14, y: 7 };
+            hideDeathOverlay();
+        }
+        
+        // Fungsi menggambar labirin + karakter (dengan gambar asli jika sudah load)
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // gambar dinding & lantai
+            for (let row = 0; row < MAP_H; row++) {
+                for (let col = 0; col < MAP_W; col++) {
+                    let x = col * cellW;
+                    let y = row * cellH;
+                    if (wallMap[row][col] === 1) {
+                        ctx.fillStyle = "#ecdae3";
+                        ctx.fillRect(x, y, cellW - 0.5, cellH - 0.5);
+                        ctx.fillStyle = "#e2cbd6";
+                        ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2);
+                    } else {
+                        ctx.fillStyle = "#fcf2f6";
+                        ctx.fillRect(x, y, cellW, cellH);
+                        ctx.fillStyle = "#f9e9f0";
+                        ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2);
+                    }
+                }
+            }
+            
+            // gambar Goal (bintang)
+            let gx = goal.x * cellW;
+            let gy = goal.y * cellH;
+            ctx.font = `${Math.floor(cellW * 0.65)}px "Segoe UI", system-ui`;
+            ctx.fillStyle = "#e7a05e";
+            ctx.shadowBlur = 4;
+            ctx.fillText("⭐", gx + cellW * 0.2, gy + cellH * 0.8);
+            ctx.fillStyle = "#f7bc45";
+            ctx.fillText("⭐", gx + cellW * 0.25, gy + cellH * 0.75);
+            ctx.shadowBlur = 0;
+            
+            // gambar NPC (monster) - link 1
+            if (npcLoaded && npcImg.complete && npcImg.naturalWidth > 0) {
+                ctx.drawImage(npcImg, npc.x * cellW + 2, npc.y * cellH + 2, cellW - 4, cellH - 4);
+            } else {
+                ctx.fillStyle = "#b76e8a";
+                ctx.beginPath();
+                ctx.ellipse(npc.x * cellW + cellW/2, npc.y * cellH + cellH/2, cellW*0.35, cellH*0.35, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#4a2c38";
+                ctx.font = `${Math.floor(cellW * 0.5)}px sans-serif`;
+                ctx.fillText("M", npc.x * cellW + cellW*0.35, npc.y * cellH + cellH*0.7);
+            }
+            
+            // gambar Player (karakter dari link 2)
+            if (playerLoaded && playerImg.complete && playerImg.naturalWidth > 0) {
+                ctx.drawImage(playerImg, player.x * cellW + 2, player.y * cellH + 2, cellW - 4, cellH - 4);
+            } else {
+                ctx.fillStyle = "#e583ab";
+                ctx.beginPath();
+                ctx.arc(player.x * cellW + cellW/2, player.y * cellH + cellH/2, cellW*0.33, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#fff";
+                ctx.font = `${Math.floor(cellW * 0.45)}px sans-serif`;
+                ctx.fillText("P", player.x * cellW + cellW*0.35, player.y * cellH + cellH*0.7);
+            }
+        }
+        
+        // Animasi utama
+        let lastTimestamp = 0;
+        function gameLoop() {
+            if (gameRunning) {
+                updateMovementFromJoystick();
+                moveNPC();   // NPC bergerak tiap frame, makin lama makin cepat
+                drawGame();
+            } else {
+                drawGame();  // tetap gambar keadaan terakhir
+            }
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event tombol reset
+        document.getElementById('manualResetBtn').addEventListener('click', () => { resetGame(); });
+        document.getElementById('tryAgainBtn').addEventListener('click', () => { resetGame(); });
+        
+        // Inisialisasi game, pastikan posisi valid
+        function initGame() {
+            resetGame();
+            gameLoop();
+        }
+        
+        initGame();
+    })();
+</script>
+</body>
+</html>
